@@ -22,7 +22,6 @@ include 'koneksi.php';
             background: white;
             padding: 30px;
             border-radius: 15px;
-            shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -45,6 +44,7 @@ include 'koneksi.php';
                     <thead class="table-dark">
                         <tr>
                             <th>Nama Anggota</th>
+                            <th>No. Telp (WA)</th>
                             <th>Judul Buku</th>
                             <th class="text-center">Tgl Pinjam</th>
                             <th class="text-center">Status</th>
@@ -53,8 +53,8 @@ include 'koneksi.php';
                     </thead>
                     <tbody>
                         <?php
-                        // Query JOIN
-                        $sql = "SELECT peminjaman.*, buku.judul, anggota.nama 
+                        // Menambahkan anggota.no_telp ke dalam query JOIN
+                        $sql = "SELECT peminjaman.*, buku.judul, anggota.nama, anggota.no_telp 
                                 FROM peminjaman 
                                 JOIN buku ON peminjaman.id_buku = buku.id_buku 
                                 JOIN anggota ON peminjaman.id_anggota = anggota.id_anggota
@@ -64,13 +64,18 @@ include 'koneksi.php';
                         $query = mysqli_query($conn, $sql);
 
                         if (mysqli_num_rows($query) == 0) {
-                            echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Tidak ada peminjaman aktif saat ini.</td></tr>";
+                            echo "<tr><td colspan='6' class='text-center py-4 text-muted'>Tidak ada peminjaman aktif saat ini.</td></tr>";
                         }
 
                         while ($row = mysqli_fetch_array($query)) {
                         ?>
                             <tr>
                                 <td class="fw-bold text-primary"><?= $row['nama']; ?></td>
+                                <td>
+                                    <a href="https://wa.me/<?= $row['no_telp']; ?>" target="_blank" class="badge bg-success text-decoration-none">
+                                        <?= $row['no_telp']; ?> 📱
+                                    </a>
+                                </td>
                                 <td><?= $row['judul']; ?></td>
                                 <td class="text-center"><?= date('d M Y', strtotime($row['tgl_pinjam'])); ?></td>
                                 <td class="text-center">
@@ -90,7 +95,6 @@ include 'koneksi.php';
             </div>
         </div>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

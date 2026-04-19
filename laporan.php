@@ -24,7 +24,6 @@ include 'koneksi.php';
             border-radius: 10px;
         }
 
-        /* CSS khusus agar saat di-print, menu dan tombol cetak hilang */
         @media print {
 
             .d-print-none,
@@ -62,6 +61,7 @@ include 'koneksi.php';
                         <tr class="text-center">
                             <th width="5%">No</th>
                             <th>Nama Anggota</th>
+                            <th>No. Telp</th>
                             <th>Judul Buku</th>
                             <th>Tgl Pinjam</th>
                             <th>Status</th>
@@ -70,7 +70,8 @@ include 'koneksi.php';
                     <tbody>
                         <?php
                         $no = 1;
-                        $sql = "SELECT peminjaman.*, buku.judul, anggota.nama 
+                        // Menambahkan anggota.no_telp ke dalam query laporan
+                        $sql = "SELECT peminjaman.*, buku.judul, anggota.nama, anggota.no_telp 
                                 FROM peminjaman 
                                 JOIN buku ON peminjaman.id_buku = buku.id_buku 
                                 JOIN anggota ON peminjaman.id_anggota = anggota.id_anggota
@@ -79,7 +80,7 @@ include 'koneksi.php';
                         $query = mysqli_query($conn, $sql);
 
                         if (mysqli_num_rows($query) == 0) {
-                            echo "<tr><td colspan='5' class='text-center py-4'>Belum ada data transaksi.</td></tr>";
+                            echo "<tr><td colspan='6' class='text-center py-4'>Belum ada data transaksi.</td></tr>";
                         }
 
                         while ($row = mysqli_fetch_array($query)) {
@@ -87,7 +88,8 @@ include 'koneksi.php';
                         ?>
                             <tr>
                                 <td class="text-center"><?= $no++; ?></td>
-                                <td><?= $row['nama']; ?></td>
+                                <td class="fw-bold"><?= $row['nama']; ?></td>
+                                <td><?= $row['no_telp']; ?></td>
                                 <td><?= $row['judul']; ?></td>
                                 <td class="text-center"><?= date('d/m/Y', strtotime($row['tgl_pinjam'])); ?></td>
                                 <td class="text-center">
@@ -102,9 +104,7 @@ include 'koneksi.php';
             </div>
 
             <div class="d-flex justify-content-end mt-4">
-                <button onclick="window.print()" class="btn btn-dark d-print-none px-4">
-                    <i class="bi bi-printer"></i> Cetak Laporan (PDF)
-                </button>
+                <button onclick="window.print()" class="btn btn-dark d-print-none px-4">Cetak Laporan (PDF)</button>
             </div>
         </div>
 
@@ -112,7 +112,6 @@ include 'koneksi.php';
             Dicetak pada: <?= date('d F Y, H:i'); ?> WIB
         </footer>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
