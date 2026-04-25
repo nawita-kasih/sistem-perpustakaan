@@ -142,13 +142,13 @@ if ($level == 'admin') {
 
                             <div class="mb-3">
                                 <label class="form-label small fw-bold">NAMA SISWA</label>
-                                <input type="text" id="display_nama" class="form-control border-0 input-readonly" placeholder="Nama Siswa..." readonly>
+                                <input type="text" id="display_nama" class="form-control border-0 input-readonly" placeholder="Nama muncul otomatis..." readonly>
                             </div>
 
                             <div class="mb-4">
                                 <label class="form-label small fw-bold">JUDUL BUKU</label>
                                 <select name="id_buku" class="form-select bg-light border-0" required>
-                                    <option value=""> Pilih Buku </option>
+                                    <option value="">-- Pilih Buku --</option>
                                     <?php
                                     $bku = mysqli_query($conn, "SELECT * FROM buku WHERE stok > 0 ORDER BY judul ASC");
                                     while ($b = mysqli_fetch_array($bku)) echo "<option value='$b[id_buku]'>$b[judul] (Stok: $b[stok])</option>";
@@ -180,11 +180,6 @@ if ($level == 'admin') {
                                         <option value="Novel" <?= $genre_filter == 'Novel' ? 'selected' : ''; ?>>Novel</option>
                                         <option value="Action" <?= $genre_filter == 'Action' ? 'selected' : ''; ?>>Action</option>
                                         <option value="Slice of Life" <?= $genre_filter == 'Slice of Life' ? 'selected' : ''; ?>>Slice of Life</option>
-                                    </optgroup>
-                                    <optgroup label="Umum">
-                                        <option value="Biografi" <?= $genre_filter == 'Biografi' ? 'selected' : ''; ?>>Biografi</option>
-                                        <option value="Sejarah" <?= $genre_filter == 'Sejarah' ? 'selected' : ''; ?>>Sejarah</option>
-                                        <option value="Motivasi" <?= $genre_filter == 'Motivasi' ? 'selected' : ''; ?>>Motivasi</option>
                                     </optgroup>
                                 </select>
                             </div>
@@ -230,7 +225,7 @@ if ($level == 'admin') {
             let hiddenId = document.getElementById('id_anggota_hidden');
 
             if (username.length > 2) {
-                fetch('get_username.php?username=' + username)
+                fetch('get_siswa_by_username.php?username=' + username)
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
