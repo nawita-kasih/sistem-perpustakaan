@@ -1,12 +1,17 @@
 <?php
 session_start();
 include 'koneksi.php';
+date_default_timezone_set('Asia/Jakarta');
 
 // Proteksi: Hanya siswa yang boleh masuk
 if (!isset($_SESSION['level']) || $_SESSION['level'] != "siswa") {
     header("location:index.php");
     exit;
 }
+
+// Ambil pengaturan default dari admin sebagai cadangan
+$res_set = mysqli_query($conn, "SELECT * FROM pengaturan WHERE id = 1");
+$default_set = mysqli_fetch_assoc($res_set);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -20,7 +25,6 @@ if (!isset($_SESSION['level']) || $_SESSION['level'] != "siswa") {
     <style>
         body {
             background-color: #f0edf8;
-            /* Latar Dull Lavender muda */
             font-family: 'Poppins', sans-serif;
         }
 
@@ -32,25 +36,21 @@ if (!isset($_SESSION['level']) || $_SESSION['level'] != "siswa") {
             border: none;
         }
 
-        /* Header Tabel - Violent Violet */
         .table-violet-header {
             background-color: #1e0e60;
             color: white;
         }
 
-        /* Teks Utama - Violent Violet */
         .text-violet {
             color: #1e0e60;
         }
 
-        /* Badge Status - Fuel Yellow */
         .badge-fuel {
             background-color: #e9b321;
             color: #1e0e60;
             padding: 8px 15px;
         }
 
-        /* Teks Denda & Batas - Cosmic */
         .text-cosmic {
             color: #743454;
         }
@@ -85,19 +85,18 @@ if (!isset($_SESSION['level']) || $_SESSION['level'] != "siswa") {
                             <th class="py-3">Judul Buku</th>
                             <th class="py-3">Tanggal Pinjam</th>
                             <th class="py-3">Batas Kembali</th>
-                            <th class="py-3">Denda Saat Ini</th>
+                            <th class="py-3">Denda Terakumulasi</th>
                             <th class="py-3">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
                         $nama_siswa = $_SESSION['nama'];
-                        // Query JOIN menggunakan Nama dari Session untuk keamanan data
-                        $sql = "SELECT peminjaman.*, buku.judul 
-                                FROM peminjaman 
-                                JOIN buku ON peminjaman.id_buku = buku.id_buku 
-                                JOIN anggota ON peminjaman.id_anggota = anggota.id_anggota
-                                WHERE anggota.nama = '$nama_siswa' AND peminjaman.status = 'pinjam'";
+                        $sql = "SELECT p.*, b.judul 
+                                FROM peminjaman p
+                                JOIN buku b ON p.id_buku = b.id_buku 
+                                JOIN anggota a ON p.id_anggota = a.id_anggota
+                                WHERE a.nama = '$nama_siswa' AND p.status = 'pinjam'";
 
                         $query = mysqli_query($conn, $sql);
 
@@ -108,38 +107,52 @@ if (!isset($_SESSION['level']) || $_SESSION['level'] != "siswa") {
                         }
 
                         while ($row = mysqli_fetch_array($query)) {
-                            $tgl_deadline = $row['tgl_kembali_seharusnya'];
+                            // 1. Logika Batas Kembali (Menyesuaikan inputan max hari admin)
+                            $tgl_pinjam = $row['tgl_pinjam'];
+                            $batas = ($row['batas_hari'] > 0) ? $row['batas_hari'] : $default_set['batas_hari_pinjam'];
+                            $deadline = date('Y-m-d', strtotime($tgl_pinjam . " +$batas days"));
+
                             $tgl_sekarang = date('Y-m-d');
 
-                            // Hitung denda berjalan
-                            $denda_berjalan = 0;
-                            $terlambat = false;
-                            if (strtotime($tgl_sekarang) > strtotime($tgl_deadline)) {
-                                $selisih = (strtotime($tgl_sekarang) - strtotime($tgl_deadline)) / (60 * 60 * 24);
-                                $denda_berjalan = $selisih * 1000; // Rp 1.000 per hari
-                                $terlambat = true;
+                            // 2. Hitung Denda (Menyesuaikan nominal denda dari admin)
+                            $denda_total = 0;
+                            $is_telat = false;
+
+                            if (strtotime($tgl_sekarang) > strtotime($deadline)) {
+                                $selisih = strtotime($tgl_sekarang) - strtotime($deadline);
+                                $hari_telat = floor($selisih / (60 * 60 * 24));
+
+                                // Gunakan denda dari transaksi, jika kosong gunakan default pengaturan
+                                $biaya_per_hari = ($row['denda_per_hari'] > 0) ? $row['denda_per_hari'] : $default_set['denda_per_hari'];
+
+                                $denda_total = $hari_telat * $biaya_per_hari;
+                                $is_telat = true;
                             }
                         ?>
                             <tr>
                                 <td class="fw-bold text-violet"><?= $row['judul']; ?></td>
-                                <td class="text-center"><?= date('d/m/Y', strtotime($row['tgl_pinjam'])); ?></td>
+                                <td class="text-center small"><?= date('d/m/Y', strtotime($tgl_pinjam)); ?></td>
                                 <td class="text-center">
-                                    <span class="px-2 py-1 rounded <?= $terlambat ? 'bg-cosmic-light' : ''; ?>">
-                                        <?= date('d/m/Y', strtotime($tgl_deadline)); ?>
+                                    <span class="px-2 py-1 rounded small <?= $is_telat ? 'bg-cosmic-light' : 'text-success fw-bold'; ?>">
+                                        <?= date('d/m/Y', strtotime($deadline)); ?>
+                                        <?= $is_telat ? ' (Terlambat)' : ''; ?>
                                     </span>
                                 </td>
-                                <td class="text-center fw-bold <?= $terlambat ? 'text-cosmic' : 'text-success'; ?>">
-                                    <?= ($denda_berjalan > 0) ? "Rp " . number_format($denda_berjalan, 0, ',', '.') : "-"; ?>
+                                <td class="text-center fw-bold <?= $is_telat ? 'text-cosmic' : 'text-muted small'; ?>">
+                                    <?= ($denda_total > 0) ? "Rp " . number_format($denda_total, 0, ',', '.') : "Belum ada denda"; ?>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge rounded-pill badge-fuel">
-                                        <i class="bi bi-clock-history"></i> <?= strtoupper($row['status']); ?>
+                                    <span class="badge rounded-pill badge-fuel text-uppercase" style="font-size: 0.7rem;">
+                                        <i class="bi bi-clock-history"></i> <?= $row['status']; ?>
                                     </span>
                                 </td>
                             </tr>
                         <?php } ?>
                     </tbody>
                 </table>
+            </div>
+            <div class="mt-3">
+                <small class="text-muted">* Segera kembalikan buku sebelum jatuh tempo untuk menghindari denda tambahan.</small>
             </div>
         </div>
     </div>
