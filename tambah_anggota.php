@@ -11,20 +11,21 @@ if (isset($_POST['submit'])) {
     $id_anggota = $_POST['id_anggota'];
     $nama       = mysqli_real_escape_string($conn, $_POST['nama']);
     $no_telp    = mysqli_real_escape_string($conn, $_POST['no_telp']);
+    $kelas      = mysqli_real_escape_string($conn, $_POST['kelas']);
     $username   = mysqli_real_escape_string($conn, $_POST['username']);
     $password   = $_POST['password'];
 
     if (empty($id_anggota)) {
         // MODE: TAMBAH BARU
-        // Cek pendaftaran ganda
-        $cek = mysqli_query($conn, "SELECT * FROM users WHERE username = '$username' OR nama_lengkap = '$nama'");
+        // Cek kembali di server untuk keamanan ganda
+        $cek = mysqli_query($conn, "SELECT * FROM users WHERE username = '$username'");
         if (mysqli_num_rows($cek) > 0) {
-            echo "<script>alert('Siswa telah terdaftar! Gunakan Username atau Nama lain.'); window.history.back();</script>";
+            echo "<script>alert('Gagal! Username sudah digunakan orang lain.'); window.history.back();</script>";
             exit;
         }
 
         $pass_md5 = md5($password);
-        mysqli_query($conn, "INSERT INTO anggota (nama, no_telp) VALUES ('$nama', '$no_telp')");
+        mysqli_query($conn, "INSERT INTO anggota (nama, no_telp, kelas) VALUES ('$nama', '$no_telp', '$kelas')");
         mysqli_query($conn, "INSERT INTO users (username, password, nama_lengkap, level) VALUES ('$username', '$pass_md5', '$nama', 'siswa')");
         echo "<script>alert('Siswa berhasil didaftarkan!'); window.location='tambah_anggota.php';</script>";
     } else {
@@ -32,7 +33,7 @@ if (isset($_POST['submit'])) {
         $old_data = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM anggota WHERE id_anggota = '$id_anggota'"));
         $nama_lama = $old_data['nama'];
 
-        mysqli_query($conn, "UPDATE anggota SET nama='$nama', no_telp='$no_telp' WHERE id_anggota='$id_anggota'");
+        mysqli_query($conn, "UPDATE anggota SET nama='$nama', no_telp='$no_telp', kelas='$kelas' WHERE id_anggota='$id_anggota'");
 
         if (!empty($password)) {
             $pass_md5 = md5($password);
@@ -44,31 +45,26 @@ if (isset($_POST['submit'])) {
     }
 }
 
-// --- LOGIKA 2: PROSES HAPUS (DENGAN TRY CATCH AGAR TIDAK ERROR FATAL) ---
+// --- LOGIKA 2: PROSES HAPUS ---
 if (isset($_GET['hapus'])) {
     $id = mysqli_real_escape_string($conn, $_GET['hapus']);
-
-    // Ambil info nama untuk hapus di tabel users
     $cek_agt = mysqli_query($conn, "SELECT nama FROM anggota WHERE id_anggota = '$id'");
 
     if (mysqli_num_rows($cek_agt) > 0) {
         $data_agt = mysqli_fetch_assoc($cek_agt);
         $nama_agt = $data_agt['nama'];
-
-        // Coba hapus
         try {
             mysqli_query($conn, "DELETE FROM users WHERE nama_lengkap = '$nama_agt'");
             mysqli_query($conn, "DELETE FROM anggota WHERE id_anggota = '$id'");
             echo "<script>alert('Data siswa berhasil dihapus.'); window.location='tambah_anggota.php';</script>";
         } catch (mysqli_sql_exception $e) {
-            // Jika gagal karena Foreign Key (ada pinjaman)
-            echo "<script>alert('Gagal menghapus! Siswa ini masih memiliki riwayat peminjaman buku. Hapus riwayat pinjamannya terlebih dahulu.'); window.location='tambah_anggota.php';</script>";
+            echo "<script>alert('Gagal menghapus! Siswa ini masih memiliki riwayat peminjaman buku.'); window.location='tambah_anggota.php';</script>";
         }
     }
 }
 
 // --- LOGIKA 3: AMBIL DATA UNTUK EDIT ---
-$edit_data = ['id_anggota' => '', 'nama' => '', 'no_telp' => '', 'username' => ''];
+$edit_data = ['id_anggota' => '', 'nama' => '', 'no_telp' => '', 'kelas' => '', 'username' => ''];
 if (isset($_GET['edit'])) {
     $id_edit = $_GET['edit'];
     $q_edit = mysqli_query($conn, "SELECT anggota.*, users.username FROM anggota JOIN users ON anggota.nama = users.nama_lengkap WHERE id_anggota = '$id_edit'");
@@ -113,10 +109,16 @@ if (isset($_GET['edit'])) {
             transition: 0.3s;
         }
 
-        .btn-fuel:hover {
+        .btn-fuel:hover:not(:disabled) {
             background-color: #b1a1e5;
             color: #1e0e60;
             transform: translateY(-2px);
+        }
+
+        .btn-fuel:disabled {
+            background-color: #d1c8f0;
+            color: #8e84ad;
+            cursor: not-allowed;
         }
 
         .table-custom-header {
@@ -128,10 +130,17 @@ if (isset($_GET['edit'])) {
             color: #1e0e60;
         }
 
-        .form-control {
+        .form-control,
+        .form-select {
             background-color: #f8f9fa;
             border: 1px solid #e2e8f0;
             padding: 10px 15px;
+        }
+
+        #msg_username {
+            font-size: 0.75rem;
+            margin-top: 5px;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -152,11 +161,12 @@ if (isset($_GET['edit'])) {
                     <hr style="border-top: 2px solid #f0edf8;">
 
                     <form action="" method="POST">
-                        <input type="hidden" name="id_anggota" value="<?= $edit_data['id_anggota']; ?>">
+                        <input type="hidden" name="id_anggota" id="id_anggota_val" value="<?= $edit_data['id_anggota']; ?>">
 
                         <div class="mb-3">
                             <label class="form-label text-uppercase">Username</label>
-                            <input type="text" name="username" class="form-control border-0 py-2" value="<?= $edit_data['username']; ?>" placeholder="Username login..." required>
+                            <input type="text" name="username" id="input_username" class="form-control border-0 py-2" value="<?= $edit_data['username']; ?>" placeholder="Username login..." required autocomplete="off">
+                            <small id="msg_username"></small>
                         </div>
 
                         <div class="mb-3">
@@ -164,9 +174,19 @@ if (isset($_GET['edit'])) {
                             <input type="text" name="nama" class="form-control border-0 py-2" value="<?= $edit_data['nama']; ?>" placeholder="Nama siswa..." required>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label text-uppercase">WhatsApp</label>
-                            <input type="text" name="no_telp" class="form-control border-0 py-2" value="<?= $edit_data['no_telp']; ?>" placeholder="628..." required>
+                        <div class="row">
+                            <div class="col-md-7 mb-3">
+                                <label class="form-label text-uppercase">WhatsApp</label>
+                                <input type="text" name="no_telp" class="form-control border-0 py-2" value="<?= $edit_data['no_telp']; ?>" placeholder="628..." required>
+                            </div>
+                            <div class="col-md-5 mb-3">
+                                <label class="form-label text-uppercase">Kelas</label>
+                                <select name="kelas" class="form-select border-0 py-2" required>
+                                    <option value="" disabled selected>Pilih...</option>
+                                    <option value="IPA" <?= ($edit_data['kelas'] == 'IPA') ? 'selected' : ''; ?>>IPA</option>
+                                    <option value="IPS" <?= ($edit_data['kelas'] == 'IPS') ? 'selected' : ''; ?>>IPS</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="mb-4">
@@ -174,7 +194,7 @@ if (isset($_GET['edit'])) {
                             <input type="password" name="password" class="form-control border-0 py-2" placeholder="Password..." <?= isset($_GET['edit']) ? '' : 'required'; ?>>
                         </div>
 
-                        <button type="submit" name="submit" class="btn btn-fuel w-100 py-3 rounded-pill shadow-sm text-uppercase">
+                        <button type="submit" name="submit" id="btn_submit" class="btn btn-fuel w-100 py-3 rounded-pill shadow-sm text-uppercase">
                             <?= isset($_GET['edit']) ? 'Simpan Perubahan' : 'Daftarkan Siswa'; ?>
                         </button>
                         <?php if (isset($_GET['edit'])): ?>
@@ -193,6 +213,7 @@ if (isset($_GET['edit'])) {
                                 <tr>
                                     <th class="py-3">No</th>
                                     <th class="py-3">Nama</th>
+                                    <th class="py-3">Kelas</th>
                                     <th class="py-3">WhatsApp</th>
                                     <th class="py-3">Username</th>
                                     <th class="py-3">Aksi</th>
@@ -206,9 +227,10 @@ if (isset($_GET['edit'])) {
                                     <tr>
                                         <td class="text-center small text-muted"><?= $no++; ?></td>
                                         <td class="fw-bold text-violet"><?= $row['nama']; ?></td>
+                                        <td class="text-center"><span class="badge bg-light text-violet border"><?= $row['kelas']; ?></span></td>
                                         <td class="text-center">
-                                            <a href="https://wa.me/<?= $row['no_telp']; ?>" target="_blank" class="text-success text-decoration-none">
-                                                <?= $row['no_telp']; ?>
+                                            <a href="https://wa.me/<?= $row['no_telp']; ?>" target="_blank" class="text-success text-decoration-none small">
+                                                <i class="bi bi-whatsapp me-1"></i><?= $row['no_telp']; ?>
                                             </a>
                                         </td>
                                         <td class="text-center small"><?= $row['username']; ?></td>
@@ -227,6 +249,39 @@ if (isset($_GET['edit'])) {
             </div>
         </div>
     </div>
+
+    <script>
+        const inputUser = document.getElementById('input_username');
+        const msgUser = document.getElementById('msg_username');
+        const btnSubmit = document.getElementById('btn_submit');
+        const idAnggota = document.getElementById('id_anggota_val').value;
+
+        inputUser.addEventListener('input', function() {
+            let username = this.value;
+
+            if (username.length > 2) {
+                fetch('cek_username.php?username=' + username + '&id_anggota=' + idAnggota)
+                    .then(response => response.text())
+                    .then(data => {
+                        if (data === 'ambil') {
+                            msgUser.innerText = 'Username sudah terdaftar!';
+                            msgUser.style.color = '#743454';
+                            // Hanya matikan tombol jika mode TAMBAH BARU
+                            if (idAnggota === "") {
+                                btnSubmit.disabled = true;
+                            }
+                        } else {
+                            msgUser.innerText = 'Username tersedia ✓';
+                            msgUser.style.color = 'green';
+                            btnSubmit.disabled = false;
+                        }
+                    });
+            } else {
+                msgUser.innerText = '';
+                if (idAnggota === "") btnSubmit.disabled = true;
+            }
+        });
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

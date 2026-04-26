@@ -9,14 +9,25 @@ $level = isset($_SESSION['level']) ? $_SESSION['level'] : '';
 $nama_user = $_SESSION['nama'];
 include 'koneksi.php';
 
-// Logika Search & Filter Katalog
+// --- LOGIKA UPDATE PENGATURAN (HANYA ADMIN) ---
+if ($level == 'admin' && isset($_POST['update_setting'])) {
+    $new_denda = $_POST['denda_per_hari'];
+    $new_batas = $_POST['batas_hari_pinjam'];
+    mysqli_query($conn, "UPDATE pengaturan SET denda_per_hari='$new_denda', batas_hari_pinjam='$new_batas' WHERE id=1");
+    echo "<script>alert('Kebijakan denda & batas waktu berhasil diperbarui!'); window.location='index.php';</script>";
+}
+
+// Ambil Pengaturan Terkini
+$set = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM pengaturan WHERE id = 1"));
+
+// Logika Search & Filter Katalog (TIDAK DIUBAH)
 $keyword = isset($_GET['cari']) ? mysqli_real_escape_string($conn, $_GET['cari']) : '';
 $genre_filter = isset($_GET['genre']) ? mysqli_real_escape_string($conn, $_GET['genre']) : '';
 
 $sql_katalog = "SELECT * FROM buku WHERE 1=1";
 if ($keyword != "") $sql_katalog .= " AND judul LIKE '%$keyword%'";
 if ($genre_filter != "") $sql_katalog .= " AND genre = '$genre_filter'";
-$sql_katalog .= " ORDER BY judul ASC";
+$sql_katalog .= " ORDER BY id_buku ASC";
 $res = mysqli_query($conn, $sql_katalog);
 
 // Ambil Statistik
@@ -51,13 +62,6 @@ if ($level == 'admin') {
             border-radius: 20px;
         }
 
-        .card-stat {
-            border: none;
-            border-radius: 15px;
-            color: white;
-            transition: 0.3s;
-        }
-
         .card {
             border: none;
             border-radius: 15px;
@@ -75,22 +79,11 @@ if ($level == 'admin') {
             color: #1e0e60;
         }
 
-        .badge-genre {
-            background-color: #b1a1e5;
-            color: #1e0e60;
-            font-weight: 500;
-        }
 
         .input-readonly {
             background-color: #e9ecef !important;
             font-weight: 600;
             color: #1e0e60;
-        }
-
-        .status-msg {
-            font-size: 0.75rem;
-            margin-top: 4px;
-            display: block;
         }
     </style>
 </head>
@@ -100,25 +93,25 @@ if ($level == 'admin') {
     <div class="container pb-5">
         <div class="welcome-section shadow-lg mb-4">
             <h2 class="fw-bold">Halo, <?= $nama_user; ?>! 👋</h2>
-            <p class="lead mb-0">Kelola peminjaman buku dengan cepat dan mudah.</p>
+            <p class="lead mb-0">Kelola perpustakaan dengan kebijakan fleksibel.</p>
         </div>
 
         <div class="row mb-4">
             <?php if ($level == 'admin') : ?>
                 <div class="col-md-4">
-                    <div class="card card-stat p-3 shadow-sm mb-3" style="background-color: #1e0e60;">
+                    <div class="card p-3 shadow-sm mb-3 text-white" style="background-color: #1e0e60;">
                         <h6>TOTAL BUKU</h6>
                         <h2 class="fw-bold"><?= $total_buku; ?></h2>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card card-stat p-3 shadow-sm mb-3" style="background-color: #743454;">
+                    <div class="card p-3 shadow-sm mb-3 text-white" style="background-color: #743454;">
                         <h6>ANGGOTA</h6>
                         <h2 class="fw-bold"><?= $total_siswa; ?></h2>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card card-stat p-3 shadow-sm mb-3" style="background-color: #846940;">
+                    <div class="card p-3 shadow-sm mb-3 text-white" style="background-color: #846940;">
                         <h6>PINJAMAN AKTIF</h6>
                         <h2 class="fw-bold"><?= $pinjam_aktif; ?></h2>
                     </div>
@@ -128,35 +121,52 @@ if ($level == 'admin') {
 
         <div class="row align-items-start">
             <?php if ($level == 'admin') : ?>
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm p-4">
+                <div class="col-md-4">
+                    <div class="card shadow-sm p-4 mb-4">
                         <h5 class="fw-bold mb-3" style="color: #1e0e60;"><i class="bi bi-plus-circle"></i> Pinjam Buku</h5>
                         <form action="proses_pinjam.php" method="POST">
-
                             <div class="mb-3">
                                 <label class="form-label small fw-bold">USERNAME SISWA</label>
                                 <input type="text" id="input_username" class="form-control border-0 bg-light" placeholder="Ketik username..." required autocomplete="off">
-                                <small id="user_status" class="status-msg"></small>
                                 <input type="hidden" name="id_anggota" id="id_anggota_hidden">
                             </div>
-
                             <div class="mb-3">
-                                <label class="form-label small fw-bold">NAMA SISWA</label>
-                                <input type="text" id="display_nama" class="form-control border-0 input-readonly" placeholder="Nama Siswa..." readonly>
+                                <label class="form-label small fw-bold">NAMA & KELAS</label>
+                                <input type="text" id="display_nama" class="form-control border-0 input-readonly" placeholder="Nama & Kelas..." readonly>
                             </div>
-
-                            <div class="mb-4">
+                            <div class="mb-3">
                                 <label class="form-label small fw-bold">JUDUL BUKU</label>
                                 <select name="id_buku" class="form-select bg-light border-0" required>
                                     <option value=""> Pilih Buku </option>
                                     <?php
                                     $bku = mysqli_query($conn, "SELECT * FROM buku WHERE stok > 0 ORDER BY judul ASC");
-                                    while ($b = mysqli_fetch_array($bku)) echo "<option value='$b[id_buku]'>$b[judul] (Stok: $b[stok])</option>";
+                                    while ($b = mysqli_fetch_array($bku)) echo "<option value='$b[id_buku]'>[$b[id_buku]] $b[judul]</option>";
                                     ?>
                                 </select>
                             </div>
-
                             <button type="submit" id="btn_submit" class="btn btn-custom w-100 py-2 shadow" disabled>SIMPAN PINJAMAN</button>
+                        </form>
+                    </div>
+
+                    <div class="card shadow-sm p-4 border-start border-warning border-5">
+                        <h5 class="fw-bold mb-3" style="color: #1e0e60;"><i class="bi bi-gear-fill"></i> Atur Kebijakan</h5>
+                        <form action="" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">BATAS PINJAM (HARI)</label>
+                                <div class="input-group">
+                                    <input type="number" name="batas_hari_pinjam" class="form-control bg-light border-0" value="<?= $set['batas_hari_pinjam']; ?>" required>
+                                    <span class="input-group-text border-0 bg-light small">Hari</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">DENDA PER HARI</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-0 bg-light small">Rp</span>
+                                    <input type="number" name="denda_per_hari" class="form-control bg-light border-0" value="<?= $set['denda_per_hari']; ?>" required>
+                                </div>
+                            </div>
+                            <button type="submit" name="update_setting" class="btn btn-dark w-100 py-2 small fw-bold text-uppercase">Update Kebijakan</button>
+                            <div class="mt-2 text-muted" style="font-size: 0.65rem;">*Perubahan berlaku untuk peminjaman mulai hari ini.</div>
                         </form>
                     </div>
                 </div>
@@ -172,19 +182,20 @@ if ($level == 'admin') {
                                 <select name="genre" class="form-select border-0 bg-light">
                                     <option value="">Semua Genre</option>
                                     <optgroup label="Akademik">
+                                        <option value="Bahasa" <?= $genre_filter == 'Bahasa' ? 'selected' : ''; ?>>Bahasa</option>
                                         <option value="Informatika" <?= $genre_filter == 'Informatika' ? 'selected' : ''; ?>>Informatika</option>
                                         <option value="Sains" <?= $genre_filter == 'Sains' ? 'selected' : ''; ?>>Sains</option>
-                                        <option value="Bahasa" <?= $genre_filter == 'Bahasa' ? 'selected' : ''; ?>>Bahasa</option>
                                     </optgroup>
                                     <optgroup label="Fiksi">
-                                        <option value="Novel" <?= $genre_filter == 'Novel' ? 'selected' : ''; ?>>Novel</option>
                                         <option value="Action" <?= $genre_filter == 'Action' ? 'selected' : ''; ?>>Action</option>
+                                        <option value="Drama" <?= $genre_filter == 'Drama' ? 'selected' : ''; ?>>Drama</option>
+                                        <option value="Novel" <?= $genre_filter == 'Novel' ? 'selected' : ''; ?>>Novel</option>
                                         <option value="Slice of Life" <?= $genre_filter == 'Slice of Life' ? 'selected' : ''; ?>>Slice of Life</option>
                                     </optgroup>
                                     <optgroup label="Umum">
                                         <option value="Biografi" <?= $genre_filter == 'Biografi' ? 'selected' : ''; ?>>Biografi</option>
-                                        <option value="Sejarah" <?= $genre_filter == 'Sejarah' ? 'selected' : ''; ?>>Sejarah</option>
                                         <option value="Motivasi" <?= $genre_filter == 'Motivasi' ? 'selected' : ''; ?>>Motivasi</option>
+                                        <option value="Sejarah" <?= $genre_filter == 'Sejarah' ? 'selected' : ''; ?>>Sejarah</option>
                                     </optgroup>
                                 </select>
                             </div>
@@ -195,65 +206,67 @@ if ($level == 'admin') {
                         <table class="table table-hover align-middle">
                             <thead class="text-center" style="background-color: #1e0e60; color: white;">
                                 <tr>
+                                    <th>KODE</th>
                                     <th>INFORMASI BUKU</th>
                                     <th>GENRE</th>
                                     <th>STOK</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php while ($row = mysqli_fetch_assoc($res)) :
-                                    $badge = ($row['stok'] > 0) ? 'background-color: #e9b321; color: #1e0e60;' : 'background-color: #743454; color: white;';
+                                <?php
+                                // Memeriksa apakah query menghasilkan data
+                                if (mysqli_num_rows($res) > 0) :
+                                    while ($row = mysqli_fetch_assoc($res)) :
+                                        $badge = ($row['stok'] > 0) ? 'background-color: #e9b321; color: #1e0e60;' : 'background-color: #743454; color: white;';
                                 ?>
+                                        <tr>
+                                            <td class="text-center small fw-bold text-violet"><?= $row['id_buku']; ?></td>
+                                            <td>
+                                                <div class="fw-bold"><?= $row['judul']; ?></div><small class="text-muted"><?= $row['pengarang']; ?> (<?= $row['tahun_terbit']; ?>)</small>
+                                            </td>
+                                            <td class="text-center"><span class="badge rounded-pill" style="background-color: #b1a1e5; color: #1e0e60;"><?= $row['genre']; ?></span></td>
+                                            <td class="text-center"><span class="badge rounded-pill px-3 py-2" style="<?= $badge ?>"><?= $row['stok']; ?> Unit</span></td>
+                                        </tr>
+                                    <?php
+                                    endwhile;
+                                else :
+                                    ?>
                                     <tr>
-                                        <td>
-                                            <div class="fw-bold"><?= $row['judul']; ?></div><small class="text-muted"><?= $row['pengarang']; ?> (<?= $row['tahun_terbit']; ?>)</small>
+                                        <td colspan="4" class="text-center py-5">
+                                            <i class="bi bi-exclamation-circle text-muted" style="font-size: 2rem;"></i>
+                                            <p class="mt-2 fw-bold text-muted">Maaf, buku tidak tersedia.</p>
                                         </td>
-                                        <td class="text-center"><span class="badge rounded-pill badge-genre"><?= $row['genre']; ?></span></td>
-                                        <td class="text-center"><span class="badge rounded-pill px-3 py-2" style="<?= $badge ?>"><?= $row['stok']; ?> Unit</span></td>
                                     </tr>
-                                <?php endwhile; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    </div>
 
-    <script>
-        document.getElementById('input_username').addEventListener('input', function() {
-            let username = this.value;
-            let statusText = document.getElementById('user_status');
-            let displayNama = document.getElementById('display_nama');
-            let btnSubmit = document.getElementById('btn_submit');
-            let hiddenId = document.getElementById('id_anggota_hidden');
+            <script>
+                document.getElementById('input_username').addEventListener('input', function() {
+                    let username = this.value;
+                    let displayNama = document.getElementById('display_nama');
+                    let btnSubmit = document.getElementById('btn_submit');
+                    let hiddenId = document.getElementById('id_anggota_hidden');
 
-            if (username.length > 2) {
-                fetch('get_username.php?username=' + username)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            displayNama.value = data.nama;
-                            hiddenId.value = data.id_anggota;
-                            statusText.innerText = "Siswa ditemukan ✓";
-                            statusText.style.color = "green";
-                            btnSubmit.disabled = false;
-                        } else {
-                            displayNama.value = "";
-                            statusText.innerText = "Username tidak terdaftar!";
-                            statusText.style.color = "red";
-                            btnSubmit.disabled = true;
-                        }
-                    });
-            } else {
-                displayNama.value = "";
-                statusText.innerText = "";
-                btnSubmit.disabled = true;
-            }
-        });
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                    if (username.length > 2) {
+                        fetch('get_username.php?username=' + username)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    displayNama.value = data.nama + " (" + data.kelas + ")";
+                                    hiddenId.value = data.id_anggota;
+                                    btnSubmit.disabled = false;
+                                } else {
+                                    displayNama.value = "";
+                                    btnSubmit.disabled = true;
+                                }
+                            });
+                    }
+                });
+            </script>
 </body>
 
 </html>

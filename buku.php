@@ -5,6 +5,10 @@ if (!isset($_SESSION['status']) || $_SESSION['status'] != "login" || $_SESSION['
     exit;
 }
 include 'koneksi.php';
+
+// FITUR SEARCH & FILTER: Menangkap keyword
+$keyword = isset($_GET['cari']) ? mysqli_real_escape_string($conn, $_GET['cari']) : '';
+$genre_filter = isset($_GET['genre']) ? mysqli_real_escape_string($conn, $_GET['genre']) : '';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -72,6 +76,13 @@ include 'koneksi.php';
             color: #1e0e60;
             font-size: 0.75rem;
         }
+
+        .search-box {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 
@@ -86,6 +97,12 @@ include 'koneksi.php';
                     </h5>
                     <form action="proses_buku.php" method="POST">
                         <input type="hidden" name="aksi" value="tambah">
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">KODE / ID BUKU</label>
+                            <input type="text" name="id_buku" class="form-control border-0 bg-light" placeholder="Contoh: AB1" required>
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label small fw-bold">JUDUL BUKU</label>
                             <input type="text" name="judul" class="form-control border-0 bg-light" placeholder="Masukkan judul..." required>
@@ -144,10 +161,39 @@ include 'koneksi.php';
             <div class="col-md-8">
                 <div class="card shadow-sm p-4">
                     <h5 class="fw-bold mb-4" style="color: #1e0e60;">Daftar Inventaris Buku</h5>
+
+                    <div class="search-box border-0 shadow-sm">
+                        <form method="GET" action="" class="row g-2">
+                            <div class="col-md-6">
+                                <input type="text" name="cari" class="form-control border-0 bg-white"
+                                    placeholder="Cari judul atau pengarang..." value="<?= htmlspecialchars($keyword); ?>">
+                            </div>
+                            <div class="col-md-4">
+                                <select name="genre" class="form-select border-0 bg-white">
+                                    <option value="">Semua Genre</option>
+                                    <option value="Informatika" <?= $genre_filter == 'Informatika' ? 'selected' : ''; ?>>Informatika</option>
+                                    <option value="Sains" <?= $genre_filter == 'Sains' ? 'selected' : ''; ?>>Sains</option>
+                                    <option value="Bahasa" <?= $genre_filter == 'Bahasa' ? 'selected' : ''; ?>>Bahasa</option>
+                                    <option value="Novel" <?= $genre_filter == 'Novel' ? 'selected' : ''; ?>>Novel</option>
+                                    <option value="Drama" <?= $genre_filter == 'Drama' ? 'selected' : ''; ?>>Drama</option>
+                                    <option value="Action" <?= $genre_filter == 'Action' ? 'selected' : ''; ?>>Action</option>
+                                    <option value="Slice of Life" <?= $genre_filter == 'Slice of Life' ? 'selected' : ''; ?>>Slice of Life</option>
+                                    <option value="Biografi" <?= $genre_filter == 'Biografi' ? 'selected' : ''; ?>>Biografi</option>
+                                    <option value="Sejarah" <?= $genre_filter == 'Sejarah' ? 'selected' : ''; ?>>Sejarah</option>
+                                    <option value="Motivasi" <?= $genre_filter == 'Motivasi' ? 'selected' : ''; ?>>Motivasi</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">CARI</button>
+                            </div>
+                        </form>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
                             <thead class="table-custom-header text-center">
                                 <tr>
+                                    <th class="py-3">KODE</th>
                                     <th class="py-3">INFORMASI BUKU</th>
                                     <th class="py-3">GENRE</th>
                                     <th class="py-3">STOK</th>
@@ -156,12 +202,27 @@ include 'koneksi.php';
                             </thead>
                             <tbody>
                                 <?php
-                                $query = mysqli_query($conn, "SELECT * FROM buku ORDER BY id_buku DESC");
+                                // Query Dinamis dengan Filter
+                                $sql = "SELECT * FROM buku WHERE 1=1";
+                                if ($keyword != "") {
+                                    $sql .= " AND (judul LIKE '%$keyword%' OR pengarang LIKE '%$keyword%' OR id_buku LIKE '%$keyword%')";
+                                }
+                                if ($genre_filter != "") {
+                                    $sql .= " AND genre = '$genre_filter'";
+                                }
+                                $sql .= " ORDER BY id_buku ASC";
+
+                                $query = mysqli_query($conn, $sql);
+
                                 if (mysqli_num_rows($query) == 0) {
-                                    echo "<tr><td colspan='4' class='text-center py-4 text-muted'>Belum ada koleksi buku.</td></tr>";
+                                    echo "<tr><td colspan='5' class='text-center py-5 text-muted'>
+                                            <i class='bi bi-search' style='font-size: 2rem;'></i><br>
+                                            Buku tidak ditemukan.
+                                          </td></tr>";
                                 }
                                 while ($b = mysqli_fetch_array($query)) { ?>
                                     <tr>
+                                        <td class="text-center small fw-bold text-violet"><?= $b['id_buku']; ?></td>
                                         <td>
                                             <strong style="color: #1e0e60;"><?= $b['judul']; ?></strong><br>
                                             <small class="text-muted">
@@ -194,7 +255,6 @@ include 'koneksi.php';
                 </div>
             </div>
         </div>
-    </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

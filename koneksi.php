@@ -1,14 +1,24 @@
 <?php
+include 'koneksi.php';
 date_default_timezone_set('Asia/Jakarta');
 
-$conn = mysqli_connect("localhost", "root", "", "perpustakaan_sekolah");
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db   = "perpustakaan_sekolah";
+$id_pinjam = $_GET['id'];
+$id_buku   = $_GET['id_buku'];
+$denda     = isset($_GET['denda']) ? $_GET['denda'] : 0;
+$tgl_kembali = date('Y-m-d'); // Tanggal hari ini
 
-$conn = mysqli_connect($host, $user, $pass, $db);
+// 1. Update status, denda, dan TANGGAL KEMBALI
+$sql = "UPDATE peminjaman SET 
+        status = 'kembali', 
+        tgl_kembali = '$tgl_kembali', 
+        denda = '$denda' 
+        WHERE id_pinjam = '$id_pinjam'";
 
-if (!$conn) {
-    die("Koneksi gagal: " . mysqli_connect_error());
+if (mysqli_query($conn, $sql)) {
+    // 2. Tambah stok buku kembali
+    mysqli_query($conn, "UPDATE buku SET stok = stok + 1 WHERE id_buku = '$id_buku'");
+
+    header("location:data_pinjam.php?pesan=berhasil_kembali");
+} else {
+    echo "Error: " . mysqli_error($conn);
 }
