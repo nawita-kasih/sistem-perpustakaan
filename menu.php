@@ -24,19 +24,45 @@ $current_page = basename($_SERVER['PHP_SELF']);
         left: 0;
         top: 0;
         z-index: 1000;
-        padding-top: 20px;
+        padding-top: 25px;
         transition: all 0.3s;
+        /* Perubahan Flexbox untuk mengatur ruang kosong ke bawah */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-brand {
+        padding: 0 25px 25px;
+        font-size: 2.4rem;
+        /* <-- UKURAN DIPERBESAR DI SINI */
+        font-weight: bold;
+        letter-spacing: 1px;
+        /* Tambahan sedikit jarak huruf agar lebih elegan */
+    }
+
+    /* Menu Container */
+    .sidebar-nav-container {
+        overflow-y: auto;
+        /* Sembunyikan scrollbar untuk estetika */
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .sidebar-nav-container::-webkit-scrollbar {
+        display: none;
     }
 
     .sidebar .nav-link {
         color: rgba(255, 255, 255, 0.7);
-        padding: 12px 25px;
+        padding: 14px 25px;
+        /* Padding diperbesar sedikit agar tidak terlalu rapat */
+        margin-bottom: 4px;
+        /* Diberi jarak antar menu */
         font-weight: 500;
         display: flex;
         align-items: center;
         transition: 0.3s;
         border-left: 4px solid transparent;
-        /* Border sembunyi */
     }
 
     .sidebar .nav-link i {
@@ -50,19 +76,43 @@ $current_page = basename($_SERVER['PHP_SELF']);
         background-color: rgba(255, 255, 255, 0.05);
     }
 
-    /* ACTIVE MENU STYLE (Sesuai gambar yang diinginkan) */
+    /* ACTIVE MENU STYLE */
     .sidebar .nav-link.active {
         color: #e9b321 !important;
         /* Fuel Yellow */
         background-color: rgba(255, 255, 255, 0.1);
         border-left: 4px solid #e9b321;
-        /* Garis indikator di kiri */
     }
 
-    .sidebar-brand {
-        padding: 0 25px 30px;
-        font-size: 1.8rem;
+    /* Penambahan elemen footer sidebar agar tidak kosong */
+    .sidebar-bottom {
+        margin-top: auto;
+        /* Mendorong container ini otomatis ke paling bawah */
+        padding: 20px 25px;
+    }
+
+    .sidebar-info-card {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(177, 161, 229, 0.2);
+        border-radius: 15px;
+        padding: 20px 15px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .btn-logout-sidebar {
+        background-color: #e9b321;
+        color: #1e0e60;
+        border: none;
         font-weight: bold;
+        width: 100%;
+        padding: 12px;
+        transition: 0.3s;
+    }
+
+    .btn-logout-sidebar:hover {
+        background-color: #b1a1e5;
+        color: #1e0e60;
     }
 
     /* Main Content Area Styling */
@@ -70,17 +120,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
         margin-left: 280px;
         width: calc(100% - 280px);
         padding: 30px;
-    }
-
-    .btn-logout-sidebar {
-        position: absolute;
-        bottom: 20px;
-        left: 25px;
-        right: 25px;
-        background-color: #e9b321;
-        color: #1e0e60;
-        border: none;
-        font-weight: bold;
     }
 
     @media (max-width: 992px) {
@@ -100,17 +139,17 @@ $current_page = basename($_SERVER['PHP_SELF']);
 </style>
 
 <div class="sidebar shadow-lg">
-    <div class="sidebar-brand">
+    <div class="sidebar-brand text-center text-md-start">
         <span style="color: #e9b321;">Librar</span>ify
     </div>
 
-    <div class="nav flex-column mt-2">
+    <div class="sidebar-nav-container nav flex-column mt-2">
         <a class="nav-link <?= ($current_page == 'index.php') ? 'active' : ''; ?>" href="index.php">
             <i class="bi bi-house-door"></i> Dashboard
         </a>
 
         <?php if ($_SESSION['level'] == 'admin') : ?>
-            <div class="small fw-bold text-uppercase px-4 mt-3 mb-2" style="color: #b1a1e5; opacity: 0.6;">Admin Menu</div>
+            <div class="small fw-bold text-uppercase px-4 mt-4 mb-2" style="color: #b1a1e5; opacity: 0.6; font-size: 0.75rem;">Admin Menu</div>
 
             <a class="nav-link <?= ($current_page == 'buku.php') ? 'active' : ''; ?>" href="buku.php">
                 <i class="bi bi-book"></i> Kelola Buku
@@ -130,7 +169,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <?php endif; ?>
 
         <?php if ($_SESSION['level'] == 'siswa') : ?>
-            <div class="small fw-bold text-uppercase px-4 mt-3 mb-2" style="color: #b1a1e5; opacity: 0.6;">Siswa Menu</div>
+            <div class="small fw-bold text-uppercase px-4 mt-4 mb-2" style="color: #b1a1e5; opacity: 0.6; font-size: 0.75rem;">Siswa Menu</div>
 
             <a class="nav-link <?= ($current_page == 'riwayat_pribadi.php') ? 'active' : ''; ?>" href="riwayat_pribadi.php">
                 <i class="bi bi-journal-bookmark"></i> Buku Saya
@@ -144,9 +183,19 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <i class="bi bi-person-circle"></i> Info Akun
             </a>
         <?php endif; ?>
+    </div>
 
-        <a class="btn btn-logout-sidebar rounded-pill" href="logout.php" onclick="return confirm('Keluar sekarang?')">
-            <i class="bi bi-box-arrow-right"></i> Logout
+    <div class="sidebar-bottom">
+        <div class="sidebar-info-card shadow-sm">
+            <div class="mb-2">
+                <i class="bi bi-book-half" style="font-size: 2rem; color: #b1a1e5;"></i>
+            </div>
+            <h6 class="fw-bold mb-1" style="color: #e9b321;">Librarify v1.0</h6>
+            <p class="small text-white-50 mb-0" style="font-size: 0.7rem;">Sistem Informasi Perpustakaan Digital Terpadu.</p>
+        </div>
+
+        <a class="btn btn-logout-sidebar rounded-pill d-block text-center" href="logout.php" onclick="return confirm('Keluar sekarang?')">
+            <i class="bi bi-box-arrow-right me-2"></i> Logout
         </a>
     </div>
 </div>
