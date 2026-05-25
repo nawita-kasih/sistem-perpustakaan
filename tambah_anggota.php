@@ -183,8 +183,36 @@ if (isset($_GET['edit'])) {
                                 <label class="form-label text-uppercase">Kelas</label>
                                 <select name="kelas" class="form-select border-0 py-2" required>
                                     <option value="" disabled selected>Pilih...</option>
-                                    <option value="IPA" <?= ($edit_data['kelas'] == 'IPA') ? 'selected' : ''; ?>>IPA</option>
-                                    <option value="IPS" <?= ($edit_data['kelas'] == 'IPS') ? 'selected' : ''; ?>>IPS</option>
+                                    <option value="10 IPA 1" <?= ($edit_data['kelas'] == '10 IPA 1') ? 'selected' : ''; ?>>10 IPA 1</option>
+                                    <option value="10 IPA 2" <?= ($edit_data['kelas'] == '10 IPA 2') ? 'selected' : ''; ?>>10 IPA 2</option>
+                                    <option value="10 IPA 3" <?= ($edit_data['kelas'] == '10 IPA 3') ? 'selected' : ''; ?>>10 IPA 3</option>
+                                    <option value="10 IPA 4" <?= ($edit_data['kelas'] == '10 IPA 4') ? 'selected' : ''; ?>>10 IPA 4</option>
+                                    <option value="10 IPA 5" <?= ($edit_data['kelas'] == '10 IPA 5') ? 'selected' : ''; ?>>10 IPA 5</option>
+                                    <option value="11 IPA 1" <?= ($edit_data['kelas'] == '11 IPA 1') ? 'selected' : ''; ?>>11 IPA 1</option>
+                                    <option value="11 IPA 2" <?= ($edit_data['kelas'] == '11 IPA 2') ? 'selected' : ''; ?>>11 IPA 2</option>
+                                    <option value="11 IPA 3" <?= ($edit_data['kelas'] == '11 IPA 3') ? 'selected' : ''; ?>>11 IPA 3</option>
+                                    <option value="11 IPA 4" <?= ($edit_data['kelas'] == '11 IPA 4') ? 'selected' : ''; ?>>11 IPA 4</option>
+                                    <option value="11 IPA 5" <?= ($edit_data['kelas'] == '11 IPA 5') ? 'selected' : ''; ?>>11 IPA 5</option>
+                                    <option value="12 IPA 1" <?= ($edit_data['kelas'] == '12 IPA 1') ? 'selected' : ''; ?>>12 IPA 1</option>
+                                    <option value="12 IPA 2" <?= ($edit_data['kelas'] == '12 IPA 2') ? 'selected' : ''; ?>>12 IPA 2</option>
+                                    <option value="12 IPA 3" <?= ($edit_data['kelas'] == '12 IPA 3') ? 'selected' : ''; ?>>12 IPA 3</option>
+                                    <option value="12 IPA 4" <?= ($edit_data['kelas'] == '12 IPA 4') ? 'selected' : ''; ?>>12 IPA 4</option>
+                                    <option value="12 IPA 5" <?= ($edit_data['kelas'] == '12 IPA 5') ? 'selected' : ''; ?>>12 IPA 5</option>
+                                    <option value="10 IPS 1" <?= ($edit_data['kelas'] == '10 IPS 1') ? 'selected' : ''; ?>>10 IPS 1</option>
+                                    <option value="10 IPS 2" <?= ($edit_data['kelas'] == '10 IPS 2') ? 'selected' : ''; ?>>10 IPS 2</option>
+                                    <option value="10 IPS 3" <?= ($edit_data['kelas'] == '10 IPS 3') ? 'selected' : ''; ?>>10 IPS 3</option>
+                                    <option value="10 IPS 4" <?= ($edit_data['kelas'] == '10 IPS 4') ? 'selected' : ''; ?>>10 IPS 4</option>
+                                    <option value="10 IPS 5" <?= ($edit_data['kelas'] == '10 IPS 5') ? 'selected' : ''; ?>>10 IPS 5</option>
+                                    <option value="11 IPS 1" <?= ($edit_data['kelas'] == '11 IPS 1') ? 'selected' : ''; ?>>11 IPS 1</option>
+                                    <option value="11 IPS 2" <?= ($edit_data['kelas'] == '11 IPS 2') ? 'selected' : ''; ?>>11 IPS 2</option>
+                                    <option value="11 IPS 3" <?= ($edit_data['kelas'] == '11 IPS 3') ? 'selected' : ''; ?>>11 IPS 3</option>
+                                    <option value="11 IPS 4" <?= ($edit_data['kelas'] == '11 IPS 4') ? 'selected' : ''; ?>>11 IPS 4</option>
+                                    <option value="11 IPS 5" <?= ($edit_data['kelas'] == '11 IPS 5') ? 'selected' : ''; ?>>11 IPS 5</option>
+                                    <option value="12 IPS 1" <?= ($edit_data['kelas'] == '12 IPS 1') ? 'selected' : ''; ?>>12 IPS 1</option>
+                                    <option value="12 IPS 2" <?= ($edit_data['kelas'] == '12 IPS 2') ? 'selected' : ''; ?>>12 IPS 2</option>
+                                    <option value="12 IPS 3" <?= ($edit_data['kelas'] == '12 IPS 3') ? 'selected' : ''; ?>>12 IPS 3</option>
+                                    <option value="12 IPS 4" <?= ($edit_data['kelas'] == '12 IPS 4') ? 'selected' : ''; ?>>12 IPS 4</option>
+                                    <option value="12 IPS 5" <?= ($edit_data['kelas'] == '12 IPS 5') ? 'selected' : ''; ?>>12 IPS 5</option>
                                 </select>
                             </div>
                         </div>
