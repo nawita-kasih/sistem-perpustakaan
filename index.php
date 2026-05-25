@@ -93,7 +93,13 @@ if ($level == 'admin') {
     <div class="container pb-5">
         <div class="welcome-section shadow-lg mb-4">
             <h2 class="fw-bold">Halo, <?= $nama_user; ?>! 👋</h2>
-            <p class="lead mb-0">Kelola perpustakaan dengan kebijakan fleksibel.</p>
+            <p class="lead mb-0">
+                <?php if ($_SESSION['level'] == 'admin') : ?>
+                    Kelola operasional, data siswa, dan kebijakan perpustakaan dengan mudah
+                <?php else : ?>
+                    Jajaki dunia literasi dan temukan buku favoritmu di Librarify~
+                <?php endif; ?>
+            </p>
         </div>
 
         <div class="row mb-4">

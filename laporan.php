@@ -147,7 +147,6 @@ $def_batas = $default_set['batas_hari_pinjam'];
                     <tbody>
                         <?php
                         $no = 1;
-                        // Query ditambahkan b.pengarang agar bisa ditampilkan
                         $sql = "SELECT p.*, b.judul, b.pengarang, a.nama, a.kelas, u.username 
                                 FROM peminjaman p 
                                 JOIN buku b ON p.id_buku = b.id_buku 
@@ -160,39 +159,56 @@ $def_batas = $default_set['batas_hari_pinjam'];
                         while ($row = mysqli_fetch_array($query)) {
                             $status = strtolower($row['status']);
                             $badge_class = ($status == 'pinjam') ? 'badge-pinjam' : 'badge-kembali';
+                            $val_tgl_kembali = isset($row['tgl_dikembalikan']) ? $row['tgl_dikembalikan'] : '';
 
+                            // --- LOGIKA PERHITUNGAN DEADLINE ---
                             $tgl_pinjam = $row['tgl_pinjam'];
-                            $batas = ($row['batas_hari'] > 0) ? $row['batas_hari'] : $def_batas;
+                            $batas_hari_db = isset($row['batas_hari']) ? $row['batas_hari'] : 0;
+                            $batas = ($batas_hari_db > 0) ? $batas_hari_db : $def_batas;
                             $deadline = date('Y-m-d', strtotime($tgl_pinjam . " +$batas days"));
+                            $tgl_skrg = date('Y-m-d');
 
-                            $tgl_kembali_raw = isset($row['tgl_kembali']) ? $row['tgl_kembali'] : '';
-
-                            // Logika Tanggal Kembali & Perhitungan Denda
+                            // --- LOGIKA TANGGAL KEMBALI ---
                             if ($status == 'pinjam') {
                                 $tgl_kembali_tampil = '<span class="text-muted small"><i>Belum Kembali</i></span>';
+                                $tgl_kembali_aktual = $tgl_skrg;
+                            } else {
+                                if (!empty($val_tgl_kembali) && $val_tgl_kembali != '0000-00-00') {
+                                    $tgl_kembali_tampil = date('d/m/Y', strtotime($val_tgl_kembali));
+                                    $tgl_kembali_aktual = $val_tgl_kembali;
+                                } else {
+                                    $tgl_kembali_tampil = date('d/m/Y');
+                                    $tgl_kembali_aktual = $tgl_skrg;
+                                }
+                            }
 
-                                $tgl_skrg = date('Y-m-d');
+                            // --- LOGIKA PERHITUNGAN DENDA SERAGAM ---
+                            $denda_per_hari_db = isset($row['denda_per_hari']) ? $row['denda_per_hari'] : 0;
+                            $biaya_harian = ($denda_per_hari_db > 0) ? $denda_per_hari_db : $default_set['denda_per_hari'];
+                            $nominal_denda = 0;
+
+                            if ($status == 'kembali') {
+                                $denda_db = isset($row['denda']) ? $row['denda'] : 0;
+                                if ($denda_db > 0) {
+                                    $nominal_denda = $denda_db;
+                                } else {
+                                    // Hitung denda retroaktif untuk data lama yg dendanya 0 tapi telat
+                                    if (strtotime($tgl_kembali_aktual) > strtotime($deadline)) {
+                                        $selisih = strtotime($tgl_kembali_aktual) - strtotime($deadline);
+                                        $hari_telat = floor($selisih / (60 * 60 * 24));
+                                        $nominal_denda = $hari_telat * $biaya_harian;
+                                    }
+                                }
+                            } else {
+                                // Hitung denda berjalan (masih dipinjam)
                                 if (strtotime($tgl_skrg) > strtotime($deadline)) {
                                     $selisih = strtotime($tgl_skrg) - strtotime($deadline);
                                     $hari_telat = floor($selisih / (60 * 60 * 24));
-                                    $biaya_harian = ($row['denda_per_hari'] > 0) ? $row['denda_per_hari'] : $default_set['denda_per_hari'];
                                     $nominal_denda = $hari_telat * $biaya_harian;
-                                    $denda_tampil = "<b class='text-danger'>Rp " . number_format($nominal_denda, 0, ',', '.') . "</b>";
-                                } else {
-                                    $denda_tampil = "-";
                                 }
-                            } else {
-                                // KONDISI SUDAH KEMBALI
-                                // Jika tgl_kembali di DB kosong, kita pakai tgl_skrg sebagai cadangan agar tidak muncul strip
-                                if (!empty($row['tgl_kembali']) && $row['tgl_kembali'] != '0000-00-00') {
-                                    $tgl_kembali_tampil = date('d/m/Y', strtotime($row['tgl_kembali']));
-                                } else {
-                                    // Jika status 'kembali' tapi tanggal kosong di DB, tampilkan tgl hari ini (saat diklik)
-                                    $tgl_kembali_tampil = date('d/m/Y');
-                                }
-
-                                $denda_tampil = ($row['denda'] > 0) ? "Rp " . number_format($row['denda'], 0, ',', '.') : "-";
                             }
+
+                            $denda_tampil = ($nominal_denda > 0) ? "<b class='text-danger'>Rp " . number_format($nominal_denda, 0, ',', '.') . "</b>" : "-";
                         ?>
                             <tr>
                                 <td class="text-center small"><?= $no++; ?></td>
