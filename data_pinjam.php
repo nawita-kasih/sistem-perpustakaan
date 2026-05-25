@@ -19,7 +19,7 @@ $keyword = isset($_GET['cari']) ? mysqli_real_escape_string($conn, $_GET['cari']
 
 <head>
     <meta charset="UTF-8">
-    <title>Data Peminjaman - E-Perpus</title>
+    <title>Data Peminjaman - Librarify</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">

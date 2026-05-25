@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Login - E-Perpus</title>
+    <title>Login - Librarify</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
         body {
@@ -48,7 +48,7 @@
             <div class="col-md-4">
                 <div class="card p-4 text-center">
                     <img src="https://cdn-icons-png.flaticon.com/512/2232/2232688.png" width="70" class="mx-auto mb-3">
-                    <h4 class="fw-bold" style="color: #1e0e60;">E-Perpus Login</h4>
+                    <h4 class="fw-bold" style="color: #1e0e60;">Librarify Login</h4>
                     <form action="proses_login.php" method="POST" class="text-start mt-4">
                         <div class="mb-3">
                             <label class="form-label fw-bold small">USERNAME</label>

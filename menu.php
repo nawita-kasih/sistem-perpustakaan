@@ -101,7 +101,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 <div class="sidebar shadow-lg">
     <div class="sidebar-brand">
-        <span style="color: #e9b321;">E</span>-Perpus
+        <span style="color: #e9b321;">Librar</span>ify
     </div>
 
     <div class="nav flex-column mt-2">
