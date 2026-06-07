@@ -6,6 +6,36 @@ if (!isset($_SESSION['level']) || $_SESSION['level'] != "admin") {
 }
 include 'koneksi.php';
 
+// FUNGSI BANTUAN UNTUK SWEETALERT (Menggantikan fungsi alert default)
+function tampilkanAlert($judul, $teks, $ikon, $aksi_js)
+{
+    echo "
+    <!DOCTYPE html>
+    <html lang='id'>
+    <head>
+        <meta charset='UTF-8'>
+        <title>Memproses...</title>
+        <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+        <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap' rel='stylesheet'>
+        <style>body { font-family: 'Poppins', sans-serif; background-color: #f0edf8; }</style>
+    </head>
+    <body>
+        <script>
+            Swal.fire({
+                title: '$judul',
+                text: '$teks',
+                icon: '$ikon',
+                confirmButtonColor: '#1e0e60'
+            }).then(() => {
+                $aksi_js
+            });
+        </script>
+    </body>
+    </html>
+    ";
+    exit;
+}
+
 // --- LOGIKA 1: PROSES SIMPAN (TAMBAH ATAU EDIT) ---
 if (isset($_POST['submit'])) {
     $id_anggota = $_POST['id_anggota'];
@@ -17,17 +47,15 @@ if (isset($_POST['submit'])) {
 
     if (empty($id_anggota)) {
         // MODE: TAMBAH BARU
-        // Cek kembali di server untuk keamanan ganda
         $cek = mysqli_query($conn, "SELECT * FROM users WHERE username = '$username'");
         if (mysqli_num_rows($cek) > 0) {
-            echo "<script>alert('Gagal! Username sudah digunakan orang lain.'); window.history.back();</script>";
-            exit;
+            tampilkanAlert('Gagal!', 'Username sudah digunakan orang lain. Silakan cari username lain.', 'warning', 'window.history.back();');
         }
 
         $pass_md5 = md5($password);
         mysqli_query($conn, "INSERT INTO anggota (nama, no_telp, kelas) VALUES ('$nama', '$no_telp', '$kelas')");
         mysqli_query($conn, "INSERT INTO users (username, password, nama_lengkap, level) VALUES ('$username', '$pass_md5', '$nama', 'siswa')");
-        echo "<script>alert('Siswa berhasil didaftarkan!'); window.location='tambah_anggota.php';</script>";
+        tampilkanAlert('Berhasil!', 'Data siswa baru berhasil didaftarkan!', 'success', 'window.location.href="tambah_anggota.php";');
     } else {
         // MODE: EDIT DATA
         $old_data = mysqli_fetch_assoc(mysqli_query($conn, "SELECT nama FROM anggota WHERE id_anggota = '$id_anggota'"));
@@ -41,7 +69,7 @@ if (isset($_POST['submit'])) {
         } else {
             mysqli_query($conn, "UPDATE users SET username='$username', nama_lengkap='$nama' WHERE nama_lengkap='$nama_lama'");
         }
-        echo "<script>alert('Data siswa berhasil diperbarui!'); window.location='tambah_anggota.php';</script>";
+        tampilkanAlert('Berhasil!', 'Data siswa berhasil diperbarui!', 'success', 'window.location.href="tambah_anggota.php";');
     }
 }
 
@@ -56,9 +84,9 @@ if (isset($_GET['hapus'])) {
         try {
             mysqli_query($conn, "DELETE FROM users WHERE nama_lengkap = '$nama_agt'");
             mysqli_query($conn, "DELETE FROM anggota WHERE id_anggota = '$id'");
-            echo "<script>alert('Data siswa berhasil dihapus.'); window.location='tambah_anggota.php';</script>";
+            tampilkanAlert('Terhapus!', 'Data siswa berhasil dihapus dari sistem.', 'success', 'window.location.href="tambah_anggota.php";');
         } catch (mysqli_sql_exception $e) {
-            echo "<script>alert('Gagal menghapus! Siswa ini masih memiliki riwayat peminjaman buku.'); window.location='tambah_anggota.php';</script>";
+            tampilkanAlert('Gagal Menghapus!', 'Siswa ini tidak dapat dihapus karena masih memiliki riwayat peminjaman buku.', 'error', 'window.location.href="tambah_anggota.php";');
         }
     }
 }
@@ -265,7 +293,7 @@ if (isset($_GET['edit'])) {
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <a href="tambah_anggota.php?edit=<?= $row['id_anggota']; ?>" class="btn btn-sm btn-outline-primary rounded-circle me-1"><i class="bi bi-pencil"></i></a>
-                                                <a href="tambah_anggota.php?hapus=<?= $row['id_anggota']; ?>" class="btn btn-sm btn-outline-danger rounded-circle" onclick="return confirm('Hapus siswa ini?')"><i class="bi bi-trash"></i></a>
+                                                <a href="tambah_anggota.php?hapus=<?= $row['id_anggota']; ?>" class="btn btn-sm btn-outline-danger rounded-circle" onclick="konfirmasiHapusSiswa(event, this.href)"><i class="bi bi-trash"></i></a>
                                             </div>
                                         </td>
                                     </tr>
@@ -278,7 +306,28 @@ if (isset($_GET['edit'])) {
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // SCRIPT KONFIRMASI HAPUS
+        function konfirmasiHapusSiswa(event, url) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Hapus Data Siswa?',
+                text: "Siswa ini tidak akan bisa login lagi ke sistem perpustakaan.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545', // Warna merah bahaya
+                cancelButtonColor: '#1e0e60', // Warna biru batal
+                confirmButtonText: '<i class="bi bi-trash"></i> Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        }
+
+        // SCRIPT AJAX VALIDASI USERNAME
         const inputUser = document.getElementById('input_username');
         const msgUser = document.getElementById('msg_username');
         const btnSubmit = document.getElementById('btn_submit');
@@ -292,14 +341,16 @@ if (isset($_GET['edit'])) {
                     .then(response => response.text())
                     .then(data => {
                         if (data === 'ambil') {
-                            msgUser.innerText = 'Username sudah terdaftar!';
+                            // Penambahan Ikon agar lebih estetik
+                            msgUser.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i>Username sudah terdaftar!';
                             msgUser.style.color = '#743454';
                             // Hanya matikan tombol jika mode TAMBAH BARU
                             if (idAnggota === "") {
                                 btnSubmit.disabled = true;
                             }
                         } else {
-                            msgUser.innerText = 'Username tersedia ✓';
+                            // Penambahan Ikon agar lebih estetik
+                            msgUser.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Username tersedia';
                             msgUser.style.color = 'green';
                             btnSubmit.disabled = false;
                         }
