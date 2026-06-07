@@ -194,7 +194,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <p class="small text-white-50 mb-0" style="font-size: 0.7rem;">Sistem Informasi Perpustakaan Digital Terpadu.</p>
         </div>
 
-        <a class="btn btn-logout-sidebar rounded-pill d-block text-center" href="logout.php" onclick="return confirm('Keluar sekarang?')">
+
+        <a class="btn btn-logout-sidebar rounded-pill d-block text-center" href="logout.php" onclick="konfirmasiLogout(event, this.href)">
             <i class="bi bi-box-arrow-right me-2"></i> Logout
         </a>
     </div>
@@ -202,3 +203,25 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 <div class="main-content">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function konfirmasiLogout(event, url) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Yakin Ingin Keluar?',
+                text: "Sesi Anda akan diakhiri dan harus login kembali untuk masuk.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                /* Merah untuk keluar */
+                cancelButtonColor: '#1e0e60',
+                /* Violet untuk batal */
+                confirmButtonText: '<i class="bi bi-box-arrow-right"></i> Ya, Keluar!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        }
+    </script>
