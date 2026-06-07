@@ -188,12 +188,12 @@ $keyword = isset($_GET['cari']) ? mysqli_real_escape_string($conn, $_GET['cari']
                                 <td class="text-center">
                                     <span class="badge rounded-pill badge-cosmic uppercase"><?= $row['status']; ?></span>
                                 </td>
-                                <td class="text-center">
-                                    <a href="proses_kembali.php?id=<?= $row['id_pinjam']; ?>&id_buku=<?= $row['id_buku']; ?>&denda=<?= $denda_total; ?>"
-                                        class="btn btn-sm px-3 rounded-pill fw-bold shadow-sm"
-                                        style="background-color: #1e0e60; color: #e9b321;"
-                                        onclick="return confirm('Konfirmasi pengembalian buku?')">
-                                        Kembalikan
+                                <td class="text-center align-middle">
+                                    <a href="proses_kembali.php?id=<?= $row['id_pinjam']; ?>&id_buku=<?= $row['id_buku']; ?>"
+                                        class="btn btn-sm px-4 py-2 rounded-pill fw-bold shadow-sm btn-action-kembali"
+                                        style="background-color: #1e0e60; color: #e9b321; border: 2px solid #1e0e60;"
+                                        onclick="konfirmasiKembali(event, this.href)">
+                                        <i class="bi bi-arrow-return-left"></i> Kembalikan
                                     </a>
                                 </td>
                             </tr>
@@ -204,6 +204,33 @@ $keyword = isset($_GET['cari']) ? mysqli_real_escape_string($conn, $_GET['cari']
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function konfirmasiKembali(event, url) {
+            event.preventDefault(); // Mencegah link langsung berpindah halaman
+
+            Swal.fire({
+                title: 'Konfirmasi Pengembalian',
+                text: "Apakah Anda yakin buku ini telah diterima kembali dari siswa?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#1e0e60',
+                /* Warna Dark Violet Librarify */
+                cancelButtonColor: '#e9b321',
+                /* Warna Fuel Yellow */
+                confirmButtonText: 'Ya, Kembalikan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Jika tombol 'Ya' diklik, arahkan ke proses_kembali.php
+                    window.location.href = url;
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
 </body>
 
 </html>

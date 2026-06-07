@@ -41,12 +41,50 @@ $update_pinjam = mysqli_query($conn, "UPDATE peminjaman SET tgl_dikembalikan = '
 $update_stok = mysqli_query($conn, "UPDATE buku SET stok = stok + 1 WHERE id_buku = '$id_buku'");
 
 if ($update_pinjam && $update_stok) {
+    // Kita buatkan format HTML khusus untuk memanggil SweetAlert dari dalam PHP
+    echo "
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Memproses...</title>
+        <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+        <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap' rel='stylesheet'>
+        <style>body { font-family: 'Poppins', sans-serif; background-color: #f0edf8; }</style>
+    </head>
+    <body>
+        <script>
+    ";
+
     if ($denda > 0) {
         $denda_f = number_format($denda, 0, ',', '.');
-        echo "<script>alert('Buku dikembalikan. Terlambat $selisih hari, denda: Rp $denda_f'); window.location='data_pinjam.php';</script>";
+        echo "
+            Swal.fire({
+                title: 'Buku Dikembalikan!',
+                text: 'Terlambat $selisih hari. Denda: Rp $denda_f',
+                icon: 'warning',
+                confirmButtonColor: '#1e0e60'
+            }).then(() => {
+                window.location = 'data_pinjam.php';
+            });
+        ";
     } else {
-        echo "<script>alert('Buku dikembalikan tepat waktu.'); window.location='data_pinjam.php';</script>";
+        echo "
+            Swal.fire({
+                title: 'Berhasil!',
+                text: 'Buku dikembalikan tepat waktu. Terima kasih!',
+                icon: 'success',
+                confirmButtonColor: '#1e0e60'
+            }).then(() => {
+                window.location = 'data_pinjam.php';
+            });
+        ";
     }
+
+    echo "
+        </script>
+    </body>
+    </html>
+    ";
 } else {
     echo "Gagal memproses: " . mysqli_error($conn);
 }
