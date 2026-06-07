@@ -243,9 +243,11 @@ $genre_filter = isset($_GET['genre']) ? mysqli_real_escape_string($conn, $_GET['
                                         <td class="text-center">
                                             <a href="proses_buku.php?aksi=hapus&id=<?= $b['id_buku']; ?>"
                                                 class="btn btn-cosmic btn-sm rounded-circle shadow-sm"
-                                                onclick="return confirm('Hapus buku ini dari katalog?')">
+                                                onclick="konfirmasiHapusBuku(event, this.href)"
+                                                title="Hapus Buku">
                                                 <i class="bi bi-trash"></i>
                                             </a>
+                                        </td>
                                         </td>
                                     </tr>
                                 <?php } ?>
@@ -257,6 +259,32 @@ $genre_filter = isset($_GET['genre']) ? mysqli_real_escape_string($conn, $_GET['
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function konfirmasiHapusBuku(event, url) {
+            event.preventDefault(); // Mencegah pindah halaman langsung
+
+            Swal.fire({
+                title: 'Hapus Koleksi Buku?',
+                text: "Data buku ini akan dihapus permanen dari katalog perpustakaan.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                /* Warna Merah untuk bahaya/hapus */
+                cancelButtonColor: '#1e0e60',
+                /* Warna Violet untuk Batal */
+                confirmButtonText: '<i class="bi bi-trash"></i> Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url; // Jalankan proses hapus jika pilih Ya
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
 </body>
 
 </html>
