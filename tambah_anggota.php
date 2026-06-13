@@ -341,7 +341,7 @@ if (isset($_GET['edit'])) {
                 fetch('cek_username.php?username=' + username + '&id_anggota=' + idAnggota)
                     .then(response => response.text())
                     .then(data => {
-                        if (data === 'ambil') {
+                        if (data.includes('ambil')) {
                             // Penambahan Ikon agar lebih estetik
                             msgUser.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i>Username sudah terdaftar!';
                             msgUser.style.color = '#743454';
